@@ -1,0 +1,75 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Home Lighting</title>
+    <link rel="stylesheet" href="{% static 'lights/style.css' %}">
+</head>
+<script>
+function toggleLight(el) {
+    const lightId = el.dataset.id;
+    fetch(`/toggle/${lightId}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    }).then(() => {
+        const statusElement = document.getElementById(`status-${lightId}`);
+        const card = document.getElementById(`card-${lightId}`);
+
+        if (el.checked) {
+            statusElement.textContent = "ON";
+            statusElement.classList.add("on");
+            statusElement.classList.remove("off");
+            card.classList.add("active");
+        } else {
+            statusElement.textContent = "OFF";
+            statusElement.classList.add("off");
+            statusElement.classList.remove("on");
+            card.classList.remove("active");
+        }
+    });
+}
+</script>
+
+<body>
+
+<div class="container">
+    <h1>Smart Home Lighting Control</h1>
+
+    {% if message %}
+        <div class="success">{{ message }}</div>
+    {% endif %}
+
+    {% for light in lights %}
+        <div class="light-card" id="card-{{ light.light_id }}">
+    <div class="light-name">
+        {{ light.name }}
+        <span id="status-{{ light.light_id }}" class="light-status {% if light.status %}on{% else %}off{% endif %}">
+            {% if light.status %}ON{% else %}OFF{% endif %}
+        </span>
+    </div>
+
+    <label class="switch">
+        <input type="checkbox"
+               data-id="{{ light.light_id }}"
+               onchange="toggleLight(this)"
+               {% if light.status %}checked{% endif %}>
+        <span class="slider"></span>
+    </label>
+</div>
+
+            <form method="POST" action="{% url 'toggle_light' light.light_id %}">
+    {% csrf_token %}
+    <label class="switch">
+        <input type="checkbox"
+               onchange="this.form.submit();"
+               {% if light.status %} checked {% endif %}>
+        <span class="slider"></span>
+    </label>
+</form>
+        </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>
